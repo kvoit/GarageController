@@ -1,0 +1,6 @@
+#define CONFIG_SSID "ssid";
+#define CONFIG_PASSWORD = "wifi password";
+
+#define CONFIG_MQTT_SERVER = "192.168.1.1";
+#define CONFIG_MQTT_USER = "garagecontroller";
+#define CONFIG_MQTT_PW = "mqtt pw";
