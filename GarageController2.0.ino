@@ -18,7 +18,7 @@ const char *mqtt_qual_topic = "home-le/cellar/garage/maindoor/status";
 unsigned long mqttReconnectTime = millis();
 unsigned long mqttReconnectInterval = 5000;
 unsigned long mqttUpdateTime = millis();
-unsigned long mqttUpdateInterval = 5000;
+unsigned long mqttUpdateInterval = 600000;
 
 const int configPin = D3;
 const int ledPin = D4;
@@ -30,10 +30,13 @@ const int relayOnInterval = 400;
 const int minClosedDist = 40;
 const int maxOpenDist = 15;
 const int distReadInterval = 1000;
+const uint32_t blockCmdInterval = 5000;
+uint32_t blockCmdTime = millis() - blockCmdInterval;
 const char *openString = "open";
 const char *isOpenString = "isopen";
 const char *closedString = "closed";
 const char *isClosedString = "isclosed";
+const char *isBlockedString = "isblocked";
 const char *undefString = "undefined";
 const char *okString = "ok";
 
@@ -56,7 +59,11 @@ void handleDistance() {
 }
 
 void handleOpen() {
-  if (distance >= minClosedDist) {
+  if ( blockCmdTime > millis() - blockCmdInterval) {
+    server.send ( 200, "text/plain", isBlockedString );
+  }
+  else if (distance >= minClosedDist) {
+    blockCmdTime = millis();
     digitalWrite(relayPin, HIGH);
     Serial.println("Setting relayPin to HIGH");
     relayOnTime = millis();
@@ -71,10 +78,14 @@ void handleOpen() {
 }
 
 void handleClose() {
-  if (distance >= minClosedDist) {
+  if ( blockCmdTime > millis() - blockCmdInterval) {
+    server.send ( 200, "text/plain", isBlockedString );
+  }
+  else if (distance >= minClosedDist) {
     server.send ( 200, "text/plain", isClosedString );
   }
   else if (distance <= maxOpenDist) {
+    blockCmdTime = millis();
     digitalWrite(relayPin, HIGH);
     Serial.println("Setting relayPin to HIGH");
     relayOnTime = millis();
@@ -121,7 +132,7 @@ void readDist() {
   distance = pulseIn(echoPin, HIGH, 12000) / 58;
   Serial.println(String(distance));
 
-  if( strcmp(statusString,undefString)) {
+  if ( strcmp(statusString, undefString)) {
     statusStringPre = statusString;
   }
 
@@ -135,7 +146,7 @@ void readDist() {
     statusString = undefString;
   }
 
-  if(strcmp(statusString,statusStringPre) && strcmp(statusString,undefString))
+  if (strcmp(statusString, statusStringPre) && strcmp(statusString, undefString))
   {
     Serial.print("New status: ");
     Serial.print(statusString);
