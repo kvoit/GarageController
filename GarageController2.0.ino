@@ -31,7 +31,7 @@ const int minClosedDist = 40;
 const int maxOpenDist = 15;
 const int distReadInterval = 1000;
 const uint32_t blockCmdInterval = 5000;
-uint32_t blockCmdTime = millis() - blockCmdInterval;
+uint32_t blockCmdTime = millis();
 const char *openString = "open";
 const char *isOpenString = "isopen";
 const char *closedString = "closed";
@@ -59,7 +59,7 @@ void handleDistance() {
 }
 
 void handleOpen() {
-  if ( blockCmdTime > millis() - blockCmdInterval) {
+  if ( millis() - blockCmdTime < blockCmdInterval ) {
     server.send ( 200, "text/plain", isBlockedString );
   }
   else if (distance >= minClosedDist) {
@@ -78,7 +78,7 @@ void handleOpen() {
 }
 
 void handleClose() {
-  if ( blockCmdTime > millis() - blockCmdInterval) {
+  if ( millis() - blockCmdTime < blockCmdInterval) {
     server.send ( 200, "text/plain", isBlockedString );
   }
   else if (distance >= minClosedDist) {
